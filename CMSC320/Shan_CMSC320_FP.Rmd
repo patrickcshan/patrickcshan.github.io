@@ -1,0 +1,386 @@
+---
+title: "CMSC320 Final Project"
+author: "Patrick Shan"
+date: "May 7, 2018"
+output:
+  html_document: default
+---
+
+```{r}
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Final Project: A Binary Classifier to Determine the Success of Mergers and Acquisitions Transactions.
+
+## Introduction
+
+Mergers and acquisitions (M&A) refer to a type of transaction where one company acquires or merges with another company to create a combined entity that is (hopefully) greater than the sum of its parts.
+
+A merger is legal consolidation of two entities into one entity. For all intents and purposes, a merger can be considered a deal where both companies dissolve and a new company is formed. An acquisition occurs when one entity takes a controlling ownership interest in another firm. An acquisition is more of a purchase of a target company by an acquiring company.
+
+Companies might use M&A in order to take advantage of variety of different phenomena:
+
+1. Pursue economies of scale by increasing market share.
+
+2. Extending their current product lines into new markets by leveraging a target's distribution network.
+
+3. Diversification of product and market risks.
+
+M&A play a crucial role in capital markets because these deals are huge market movers. Deal sizes can reach billions, and the total M&A market size has topped $3 trillion every year for four straight years. As such, M&A transactions play a large role in the health of the economy.
+
+## Problem Statement
+
+Unfortunately, many M&As are not successes. According to a string of studies and surveys performed by strategic consulting firms throughout the 1990s and early 2000s, over 50% of M&A transactions fail in increasing stock performance relative to the industry.
+
+There are many reasons why these consolidations fail. Sometimes it is due to the high costs of integrating a target company into the acquirer. For instance, the 2001 AOL Time Warner merger's proposed synergies never materialized.
+
+Another reason may be because of a difference in management philosophy and company culture between the two companies. For instance, the recent 2016 acquisition of Jarden by Newell. Newell attempted to align all of the sale strategies of Jarden products to Newell's own. This caused many Jarden products struggling in the market and Newell is now considering divesting underperforming Jarden products.
+
+Another important aspect of M&A deals are the large premiums associated with buyouts. A premium is an additional amount of money offered to entice the target company to sell to an acquirer. Another reason for them is to allow acquirers to calculate a specific price to pay for the shares of the target company instead of allowing market forces determine them. This also avoids the holdup problem, where one person can hold onto shares of the target company and refuse to sell except for exorbitant prices.
+
+The problem that we will be exploring in this paper is: _Can we predict whether or not an M&A transaction will be successful using a binary classifier?_
+
+## Methodology
+
+In order to determine the answer to this question, we will utilize the following methodology:
+
+### _Data Acquisition_
+
+We will first acquire M&A data. The data we use will be sourced from the Bloomberg Terminal MA<GO> function. This function keeps track of M&A deals throughout the world and offers the ability to filter out transactions based on date, deal type, and other features.
+
+In order to simplify the data we will be looking at, we will utilize the following filters to narrow the sample space:
+
+1. We will look at only transactions between 1/1/2016 and 1/1/2017. This will give us recent data, while also letting us analyze the future performance of the stock.
+
+2. We will look only at transactions done in cash or cash and debt. This is because in a stock acquisition, it dilutes the total shares outstanding. Thus, it becomes more difficult to calculate and standardize the resulting stock's performance. Additionally, we will ignore the effect of the increased debt. In order to justify this, we will take on the assumptions of the Modigliani Miller Theorem, which allows us to ignore the effect of debt on company performance (Appendix 1).
+
+3. We will filter by M&A transactions only. This is because M&A<GO> also tracks company's making a significant investment (5-10%+ ownership stakes) in another company.
+
+4. We will only look at US companies since our stock information only covers publically traded US companies.
+
+Unfortunately, the Bloomberg API does not allow us to extract M&A data. Instead, I will extract it by exporting it directly from the Bloomberg Terminal MA<GO> function. One issue is that Bloomberg does not allow you to export more than 5000 records at a time. In order to get around this limitation, we will import multiple times and eliminate any duplicates (due to overlapping filters). Afterwards, we will import it into R to perform statistical analysis.
+
+In addition to the M&A information, we need information on the Stock Tickers as well. We imported data from Kaggle containing information on all US stock tickers and ETFs (https://www.kaggle.com/borismarjanovic/price-volume-data-for-all-us-stocks-etfs).
+
+### _Exploratory Data Analysis and Hypothesis Testing_
+
+Based upon the raw data from MA<GO> we can't make any conclusions. In order to create our predictor we will need to determine whether or not the M&A transaction can be considered a "success". In order to do this, we will consider the growth of the combined entity and compare whether or not there is a difference in the growth rate of the stock price compared to the previous entity (the acquirer).
+
+This comparison strongly resembles a hypothesis test! In our hypothesis test we will compare two values and try to determine whether or not the two values are equal or not equal. In this case, we will see if the consolidated entity's stock distribution is statistically significantly different than the acquirer's old stock return distribution.
+
+One important fact to know when performing this hypothesis test is that the set of stock (percentage) returns form a normal distribution (Appendix 2). There is empirical evidence to support this conclusion.
+
+Thus our hypothesis test needs to determine whether or not the returns over the course of the year after the merger come from the same distribution as the returns from before.
+
+In order to determine this, we will use the Kolmogorov-Smirnov Goodness-of-Fit Test. This statistical test determines whether or not a set of data points comes from a specific continuous distribution. We will test if the returns after the merger are from the same distribution as the returns before the merger.
+
+If we reject the null hypothesis, we must first determine whether or not the mean moves upwards. If the mean moves upwards, then the M&A was a success. If it moves downwards, or we affirm the null hypothesis then the M&A was a failure.
+
+### _Training our Classifier_
+
+After classifying the data set ourselves in the Exploratory Data Analysis portion of the paper, we will move on to training a binary classifier to determine whether or not given
+
+In this paper, I will be using a Random Forest Classifier to classify our data. I will also use k-folds cross validation in order to help test the effectiveness of the Random Forest method.
+
+The biggest reasons why I am using the Random Forest Classifier is because the Random Forest algorithm is very versatile, convenient and it avoids overfitting.
+
+The Random Forest is versatile and convenient because it can easily handle missing values and categorical values. It also avoids overfitting by selecting "important" features at random and constructing a predictor and aggregating the votes of hundreds or thousands of those randomized predictors.
+
+### _Evaluating our Classifier_
+
+In terms of evaluating our classifier, I am going to utilize the k-folds cross validation technique mentioned above. This technique basically partitions my training set into two sets: a training set and a test set. This is because getting more data might be difficult or impossible. For instance, I can't get anymore M&A transactions from 2016-2017 because nobody can time travel.
+
+Thus, in order to evaluate my classifier, I will train it on a subset of the data, my new training set, and test that classifier's performance on the remaining subset. Then I will repeat this process so I am able to have every single data point in at least one test set. That way, I can estimate a distribution of my classifiers performance, which will give me a more precise and accurate insight in how well it is doing.
+
+Afterwards, I will create an ROC curve and calculate the area under it. An ROC curve illustrates the tradeoff between the true positive rate (measures when our classifier says good mergers are good) and the false positive rate (measures when our classifier says bad mergers are good). The area under it determines the probability that when you're given a two mergers, one bad and one good, the classifier says the good merger was better than the bad merger.
+
+## Results
+
+### _Data Acquisition_
+
+We have exported CSV data from the Bloomberg Terminal's MA<GO> function. The following chunk illustrates how to import it into R, we will use the read_csv function in the readr library. 
+
+```{r import M&A}
+library(readr)
+
+mna <- read_csv("mnadata.csv")
+mna
+  
+```
+
+Note that there are a significant number of NA values! In order to utilize this data table, we will need to clean the data up by replacing the NA values. The following chunk cleans up the data based upon the following ruels:
+
+1. Remove the Seller Name since it is irrelevant.
+
+2. Remove any entries where the Acquirer Ticker and Acquirer Total Assets does not exist or it begins with a number. If it begins with a number, it is because it is a legacy ticker (or has no public information) (on Bloomberg's system). This means the company does not exist anymore, or is a private entity. This generally means that there is going to be very little information on the acquirer that we can train our model with.
+
+The current results now include only publicly traded companies in the US. Thus there will be information about their profit margins, total assets, etc.
+
+3. We will replace any NAs in Target's total assets with either the deal size (no premium) or the deal size with an assumed premium (the average premium of all listed ones in the dataset).
+
+4. We will remove the synergies columns since most of them are NA, and there is no way to correctly estimate these values with the information provided.
+
+5. Some values are missing in the Current Premium column. If there is no established premium value, then we should assume that there is no record of the target company's total assets. When this occurs, we have two options: we can assume that there is an average premium available and use that, or we can assume that there is no premium and the buyer is only paying for the assets the target owns. Either of these decisions are not reflective of the real world. The best method to solve this would probably to be to remove any NA values in this column.
+
+6. We're missing some TV/EBITDA value it means that we have no clue about the target company's EBITDA (Earnings before Interest, Tax, Depreciation, and Amortization). This means that the target company may not be public and not release their earnings information. We're also missing some target profit margins, which would be for the same reason. Once again, instead of making assumptions since we are utilizing information from a large amount of industries we will drop the na values.
+
+7. We print out the resulting mna_cleaned table. Look at how nice and full that table is compared to the bare bones mna table!
+
+In addition to these results, I will also consider looking only at the size of the premiums. There are a lot of stipulations in the aboved "cleaned" data table, and that may make it unrealistic to use in order to train the model.
+
+8. Construct a premium only table.
+
+```{r Data Cleaning}
+library(dplyr)
+mna_cleaned <- mna %>%
+  select(-`Seller Name`) %>% #Step 1
+  filter(!grepl("\\d",`Acquirer Ticker`)) %>%
+  filter(!is.na(`Acquirer Ticker`)) %>% 
+  filter(grepl("US", `Acquirer Ticker`)) %>%#Step 2
+  mutate(`Announced Total Value` = `Announced Total Value (mil.)`) %>%
+  mutate(`Target Total Assets`= ifelse(is.na(`Target Total Assets`), `Announced Total Value`, `Target Total Assets`)) %>% #Step 3
+  select(-starts_with("Synergy")) %>%  #Step 4
+  filter(!is.na(`Current Premium`)) %>% #Step 5
+  filter(!is.na(`TV/EBITDA`)) %>%
+  filter(!is.na(`Target Profit Margin`)) #Step 6
+
+mna_cleaned
+
+mna_premiums <- mna %>%
+  select(`Announce Date`,`Acquirer Ticker`,`Current Premium`, `Announced Total Value`=`Announced Total Value (mil.)`) %>%
+  filter(!is.na(`Acquirer Ticker`)) %>%
+  filter(!is.na(`Current Premium`)) %>%
+  filter(!is.na(`Announced Total Value`)) %>%
+  filter(grepl("US", `Acquirer Ticker`)) %>%
+  filter(!grepl("\\d",`Acquirer Ticker`))
+
+mna_premiums
+```
+
+### Exploratory Data Analysis and Hypothesis Testing
+
+In this seciton, we will be performing exploratory data analysis. The point of this seciton is to analyze the data set and summarize their main characteristics. This will help us find insights about the data, and help prepare our data set to be put through the training model.
+
+In our case, the premiums only data set is already ready to go. This section will only work with the mna_cleaned table, and will convert some columns into usable data.
+
+The big decision I want to make in this section is converting the target and acquirer industry information into a new column that says whether or not they match. For instance, it might make more sense for a company to expand into the same industry since they have expertise in it, but it might also make sense for them to move to another industry and try to find new business opportunities.
+
+```{r EDA}
+mna_cleaned_EDA <- mna_cleaned %>%
+  mutate(GroupMatched = `Acquirer Industry Group` == `Target Industry Group`) %>%
+  mutate(SubgroupMatched = `Acquirer Industry Subgroup`==`Target Industry Subgroup`) %>%
+  select(-`Acquirer Industry Group`, -`Target Industry Group`, -`Acquirer Industry Subgroup`, -`Target Industry Subgroup`)
+
+mna_cleaned_EDA
+```
+
+If you would like to get an idea of what the data looks like right now, we can take a look at the distributions of premiums. We do this with the ggplot2 library. ggplot is a function that allows us to design visualizations to display our data.
+
+The way ggplot works is users provide it with aesthetic values, in this case, we are telling it what to display in the x-axis, but we are also able to provide other information like what color we want to display it as.
+
+Afterwards, we provide it with a geometry value. In the chunk below we use geom_histogram(), which tells ggplot2 that we want to display a histogram.
+
+Ggplot2 now know that we want to use the Current Premium column as an x-axis in a histogram. You can see the results down here:
+```{r Premium Distribution}
+library(ggplot2)
+mna_cleaned_EDA %>% 
+  select(`Current Premium`) %>%
+  ggplot(aes(x=`Current Premium`)) + geom_histogram()
+```
+
+This doesn't look too great as a histogram since there are some severely discounted deals, but we can see most of them hover around the 0 range. This is because they're mostly decimals so in order to see this clearly, we should try a different method such as a boxplot or removing the outliers.
+
+Below you can see a chunk that displays only the values from -1 to 1, as a box plot and a histogram (density plot). Note that we use a different kind of geometry for displaying these values in the chunk!
+
+```{r Premium Distribution Part 2}
+mna_cleaned_EDA %>%
+  select(`Current Premium`) %>%
+  filter(abs(`Current Premium`) <= 1) %>%
+  ggplot(aes(x = "Premium", y=`Current Premium`)) + geom_boxplot()
+
+mna_cleaned_EDA %>%
+  select(`Current Premium`) %>%
+  filter(abs(`Current Premium`) <= 1) %>%
+  mutate(`Current Premium`=`Current Premium`*100) %>%
+  ggplot(aes(x=`Current Premium`)) + geom_density()
+```
+
+Now, I will prepare the normal distributions we care about for the hypothesis test. In order to do this, we need to read in the acquirer ticker and then look for a matching csv file of daily prices. If it exists, we load in those prices and split them between before and after values. Finally, we run a K-S Test. As discussed above, the K-S test is a statistical test determining whether or not two data sets come from the same distribution. Fortunately for us, R provides its own k-s test function, ks.test(). We now use it in the chunk below:
+
+```{r Hypothesis Test}
+library(dplyr)
+# Make it easier to deal with
+acqtick <- mna_cleaned_EDA %>% 
+  rename(ticker = `Acquirer Ticker`) %>%
+  mutate(ticker=sub(' ','.',ticker)) %>%
+  mutate(ticker=sub('/','-',ticker)) %>%
+  mutate(ticker=tolower(ticker))
+acqtick$pval <- NA
+# Filetypes are of the form TICKER.US instead of TICKER US in folder.
+# Additionally BRK/A is stored as BRK-A
+for(i in 1:nrow(acqtick)){
+  filename = paste("./Stocks/", acqtick$ticker[i], ".txt", sep="")
+  if(file.exists(filename)){
+     prices <- read_csv(filename, col_types=cols()) 
+     announcedate <- as.Date(acqtick$`Announce Date`[i], format="%m/%d/%Y")
+     prices <- prices %>% 
+       select(Date, Close) %>%
+       filter(Date >= announcedate-365 & Date <= announcedate+365)
+     preprices <- prices %>% filter(Date < announcedate) %>% rename(Price=Close) %>% select(Price)
+     postprices <- prices %>% filter(Date >= announcedate) %>% rename(Price=Close) %>% select(Price)
+     if(nrow(preprices) != 0 && nrow(postprices) != 0){
+       acqtick$pval[i] <- (ks.test(preprices$Price,postprices$Price, alternative="less"))$p.value
+     }
+  }
+}
+acqtick <- acqtick %>% mutate(success=pval<=0.05)
+
+```
+
+### Training our Classifier
+
+Now we have our results for whether or not a company's merger or acquisition is considered a success or a failure. Now it is a good time to begin training our machine learning model in order to classify them.
+
+We will use the randomForest library to create and train a random forest. Additionally, we will use k-folds cross validation. This technique gives us the ability to use part of our dataset to train, and part of it to test. We will split our data into ten groups, train our model using nine of them, and test it on the last group.
+```{r RandomForest Time}
+set.seed(1234)
+library(randomForest)
+library(caret)
+library(purrr)
+
+#There are some NAs, which means our pricing data does not have pricing data on that asset, or it does not have relevant pricing data (no pre merger prices or post merger prices)
+acqtick <- acqtick %>% filter(!is.na(success))
+
+#In order to train our random forest we must remove the spaces from our column names.
+names(acqtick) <- gsub("\\s","_",names(acqtick))
+names(acqtick) <- gsub("/","",names(acqtick))
+
+#Additionally, there cannot be any character columns. Change these into ones with factors.
+acqtick <- acqtick %>% 
+  mutate(success=factor(success, levels=c(TRUE,FALSE))) %>%
+  mutate(Payment_Type=factor(Payment_Type,levels=c("Cash", "Cash and Debt")))
+
+
+rfdf <- createFolds(acqtick$success, k=10) %>%
+  purrr::imap(function(test_indices, fold_number){
+    train_df <- acqtick %>% select(-`Announce_Date`, -ticker, -`Target_Ticker`,-pval, -`Announced_Total_Value_(mil.)`) %>%
+      slice(-test_indices)
+    test_df <- acqtick %>% select(-`Announce_Date`, -ticker, -`Target_Ticker`,-pval, -`Announced_Total_Value_(mil.)`) %>%
+      slice(test_indices)
+    
+    rf_succ <- randomForest(success~., data=train_df, ntree=500)
+    
+    test_df %>% select(observed_label = success) %>%
+      mutate(fold=fold_number) %>%
+      mutate(prob_positive=predict(rf_succ, newdata=test_df, type="prob")[,1]) %>%
+      mutate(predicted_label = ifelse(prob_positive >0.5, TRUE, FALSE))
+      
+  }) %>%
+  purrr::reduce(bind_rows)
+rfdf
+```
+
+### Evaluating our Classifier
+Alright, now we have a datatable that contains the observed labels, and what our model predicts them to be. Using this information we will now see how good our model is.
+
+We do this by first computing a table of error rates:
+```{r compute error}
+rfdf2 <- rfdf %>%
+  mutate(observed_label=as.logical(observed_label)) %>%
+  mutate(error_rf=observed_label!=predicted_label) %>% group_by(fold) %>% summarize(rf=mean(error_rf)) %>%
+  tidyr::gather(model, error,-fold)
+rfdf2
+```
+
+Based on these results, it does not look very promising, since many of the models failed to have over 50% accuracy. Another way to visualize this is by using the AUROC methodology.
+
+AUROC (Area under the Reciever Operating Curve) is a method to determine how likely our model is to rate a successful merger more successful than an unsuccessful merger. Since we only have two values: successful and unsuccessful, this can be boiled down to the following: AUROC determines the probability that given two mergers, one successful and one unsuccessful, the model would be able to say the successful one was successful, and the unsuccessful one was unsuccessful.
+
+In order to create the ROC curve, we will need to use the ROCR library.
+
+```{r AUROC}
+library(ROCR)
+
+labels <- split(rfdf$observed_label, rfdf$fold)
+
+predictions_rf <- split(rfdf$prob_positive, rfdf$fold) %>%
+  prediction(labels)
+
+mean_auc_rf <- predictions_rf %>%
+  performance(measure="auc") %>%
+  slot("y.values") %>% unlist() %>%
+  mean()
+
+predictions_rf %>%
+  performance(measure="tpr", x.measure="fpr") %>%
+  plot(avg="threshold", col="orange", lwd=2)
+
+legend("bottomright", legend=paste(c("rf performance"), "AUC:", round(c(mean_auc_rf), digit=3)))
+
+```
+
+As you can see by the above plot, we have an ROC curve with 0.633 AUROC. This means that there is a 63.3% chance that we are able to correctly classify a successful and unsuccessful merger. This means that our model is not very effective, because a coin flip would give us an AUROC of 0.5.
+
+## Discussion
+
+Let's talk about these results and what they mean, and why these results may have occurred. Our AUROC is very low at 63.3%. This means that are model is only slightly better than flipping a coin. Additionally, something else to consider is the universe of M&A data that we used is a very specific subset that might not be representative of all M&A transactions.
+
+Our data had to have a significant number of constraints on it. When we first planned out the data constraints we decided to restrict ourselves only to transactions between 1/1/2016 and 1/1/2017. One hidden variable that we weren't able to track, and is hard to describe is the economic conditions of 2016 and 2017. It will be difficult to extend our model into the future, because economic conditions may change. In terms of financial literature, we should expect similar results for the next 2 or 3 years, however if there is a significant catastrophic event like the Great Depression, or the 2008 Financial Crisis, using our model would not make sense.
+
+Additionally, we decided to only look at transactions done in cash or cash and debt. There are multiple ways for companies to purchase other companies such as using their own stock. We decided to avoid these transactions because we determined the performance of the merger based on stock price. We may have been able to get away by using market capitalization (shares outstanding * stock price), but it is still possible that the purchase would affect the market capitalization (Since it would directly affect the price per share, and the number of shares, we cannot tell if the market cap would stay constant).
+
+Finally, We were only able to look at public US companies, since we had difficulty finding data on stock price for other countries, and even our US stock price dataset didn't include all of tickers of interest. This illustrates probably the most difficult portion of this experiment: finding usable data and ensuring data quality. There are very few datasets online that would provide us with a holistic view of the global stock market.
+
+In our experiment we used Bloomberg Terminal, which is produced by one of the premier financial information companies. Even then, our dataset was missing a significant portion of information, and we had to pare it down for no reason other than we just didn't have access to the information available. We could probably look in other databases, however those have hefty subscription fees that made it unfeasible to collect for this project. For instance, Bloomberg Terminal subscriptions cost over $20,000 per year.
+
+One method to avoid this would be to scrape the web, however that also presents other challenges, such as writing a successful web scraper for a website like Yahoo Finance. This would require us being able to figure out the naming scheme for the website's pages, and also analyze the page in order to find out how to extract this data. Perusing through finance.yahoo.com it seems possible, unfortunately I did not have the time to explore this option.
+
+Finally, a big question that I have neglected to discuss is whether or not it even makes sense to use these predictors for M&A success. Most M&A literature focuses on the qualitative portions of a mergers and acquisition transaction. They go over things such as corporate culture and integration techniques. They discuss how many interactions and how cordial the interactions are between top management of the two companies. The focus on qualitative aspects does not mean that there are no quantitative predictors, however, the dearth of quantitative papers/research in this area is discouraging. For such a huge industry with billions of dollars on the line, if there were effective quantitative predictors, people would probably have found them by now.
+
+## Appendix 1: Modigliani-Miller Theorem
+
+The Modigliani-Miller Theorem is a fundamental theorem in finance and provides a basis for understanding capital structure, which refers to how a company decides to finance its operations.
+
+The Modigliani-Miller Theorem states that in an efficient market absent of taxes, bankruptcy and agency costs, and asymmetric information, the value of a firm is unaffected by how the firm is financed.
+
+In other words: If I were to run a company and it costs me \$1,000,000 to run it. I could borrow \$1,000,000 from the bank to run it, and I could use \$1,000,000 of my own money to run it, and the company should be worth the same!
+
+In general, this does not hold at all in reality. The reason for this is because the assumptions do not hold. Luckily, it is often advantageous for a company to hold _some_ debt. The government often allows companies to avoid paying taxes because interest expenses come out before taxes are calculated.
+
+## Appendix 2: Stock Returns are normally distributed.
+
+### Empirical Evidence
+
+Here is the distribution of SPY's returns, which is an ETF that tracks the S&P 500 index.
+```{r Empirical Evidence for Normal, message=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+SPY <- read_csv("./ETFs/spy.us.txt") %>%
+  select(Date, Close) %>%
+  mutate(pct_change=(Close-lag(Close,n=1))/Close)
+SPY
+SPY %>% 
+  ggplot(mapping=aes(x=pct_change)) + geom_density()
+```
+
+While a stock's price returns are not perfectly normally distributed. A great example to check out is the book Black Swan by Nassim Nicholas Taleb, a finance professional turned writer. Taleb argues that we should use a more long-tailed distribution. This is because when we use a normal distribution, we ignore the very rare events like financial crises. However, we can't ignore these events even though they are rare because they have dramatic and terrible effects on everyone.
+
+In this project, we will be approximating stock returns normally because it does well for our purposes. The data we're using, 2016-2017, does not occur during a financial crisis. 
+
+Plus, it wouldn't make sense to look at the performance M&As in terms of those rare events since the effect of the M&A on stock price would be overwritten by overall market sentiment. 
+
+### Intuition
+
+Price returns (percentages) are normally distributed. A stock can return 1%, 3%, 5%, -1%, -3%, or -5%. A stock's price is log-normally distributed. This is because it can jump up a huge amount, but it can only lose so much. Additionally, each time you lose, you can't lose as much since you are bounded by $0.
+
+## Miscellaneous Notes
+
+Questions to ask during Office Hours!
+
+Random Forests develop by selecting random features to split on. Thus, we need to ask ourselves: WHAT FEATURES SHOULD I GET?
+PREMIUM, ACQUIRER ASSETS / TARGET ASSETS $\approx$ Acquirer MCap / Target MCap, Market to Book, Price to Earnings, ROE?
+
