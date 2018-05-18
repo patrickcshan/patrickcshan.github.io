@@ -6,11 +6,11 @@ output:
   html_document: default
 ---
 
-```{r}
-```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir="C:/Users/Patrick Shan/Documents/Spring 2018/CMSC320/Final Project/")
+
 ```
 
 # Final Project: A Binary Classifier to Determine the Success of Mergers and Acquisitions Transactions.
@@ -129,10 +129,6 @@ The current results now include only publicly traded companies in the US. Thus t
 
 7. We print out the resulting mna_cleaned table. Look at how nice and full that table is compared to the bare bones mna table!
 
-In addition to these results, I will also consider looking only at the size of the premiums. There are a lot of stipulations in the aboved "cleaned" data table, and that may make it unrealistic to use in order to train the model.
-
-8. Construct a premium only table.
-
 ```{r Data Cleaning}
 library(dplyr)
 mna_cleaned <- mna %>%
@@ -149,15 +145,6 @@ mna_cleaned <- mna %>%
 
 mna_cleaned
 
-mna_premiums <- mna %>%
-  select(`Announce Date`,`Acquirer Ticker`,`Current Premium`, `Announced Total Value`=`Announced Total Value (mil.)`) %>%
-  filter(!is.na(`Acquirer Ticker`)) %>%
-  filter(!is.na(`Current Premium`)) %>%
-  filter(!is.na(`Announced Total Value`)) %>%
-  filter(grepl("US", `Acquirer Ticker`)) %>%
-  filter(!grepl("\\d",`Acquirer Ticker`))
-
-mna_premiums
 ```
 
 ### Exploratory Data Analysis and Hypothesis Testing

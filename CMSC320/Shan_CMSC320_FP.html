@@ -244,10 +244,6 @@ mna &lt;- read_csv(&quot;mnadata.csv&quot;)</code></pre>
 <li><p>We’re missing some TV/EBITDA value it means that we have no clue about the target company’s EBITDA (Earnings before Interest, Tax, Depreciation, and Amortization). This means that the target company may not be public and not release their earnings information. We’re also missing some target profit margins, which would be for the same reason. Once again, instead of making assumptions since we are utilizing information from a large amount of industries we will drop the na values.</p></li>
 <li><p>We print out the resulting mna_cleaned table. Look at how nice and full that table is compared to the bare bones mna table!</p></li>
 </ol>
-<p>In addition to these results, I will also consider looking only at the size of the premiums. There are a lot of stipulations in the aboved “cleaned” data table, and that may make it unrealistic to use in order to train the model.</p>
-<ol start="8" style="list-style-type: decimal">
-<li>Construct a premium only table.</li>
-</ol>
 <pre class="r"><code>library(dplyr)</code></pre>
 <pre><code>## 
 ## Attaching package: 'dplyr'</code></pre>
@@ -290,29 +286,6 @@ mna_cleaned</code></pre>
 ## #   Group` &lt;chr&gt;, `Acquirer Industry Subgroup` &lt;chr&gt;, `Target Industry
 ## #   Subgroup` &lt;chr&gt;, `Current Premium` &lt;dbl&gt;, `Announced Total
 ## #   Value` &lt;dbl&gt;</code></pre>
-<pre class="r"><code>mna_premiums &lt;- mna %&gt;%
-  select(`Announce Date`,`Acquirer Ticker`,`Current Premium`, `Announced Total Value`=`Announced Total Value (mil.)`) %&gt;%
-  filter(!is.na(`Acquirer Ticker`)) %&gt;%
-  filter(!is.na(`Current Premium`)) %&gt;%
-  filter(!is.na(`Announced Total Value`)) %&gt;%
-  filter(grepl(&quot;US&quot;, `Acquirer Ticker`)) %&gt;%
-  filter(!grepl(&quot;\\d&quot;,`Acquirer Ticker`))
-
-mna_premiums</code></pre>
-<pre><code>## # A tibble: 79 x 4
-##    `Announce Date` `Acquirer Ticker` `Current Premium` `Announced Total V~
-##    &lt;chr&gt;           &lt;chr&gt;                         &lt;dbl&gt;               &lt;dbl&gt;
-##  1 8/10/2015       BRK/A US                     0.0213               35658
-##  2 6/13/2016       MSFT US                      0.0102               24380
-##  3 8/22/2016       PFE US                       0.0737               13695
-##  4 2/16/2016       APO US                       0.0715               12304
-##  5 4/30/2014       EXC US                       1.11                 12185
-##  6 8/24/2015       SO US                        0.0303               11937
-##  7 7/28/2016       ORCL US                     20.7                   8716
-##  8 10/8/2015       BX US                      - 0.252                 7693
-##  9 10/26/2015      DUK US                     - 0.0500                6536
-## 10 2/1/2016        D US                       - 0.239                 5965
-## # ... with 69 more rows</code></pre>
 </div>
 <div id="exploratory-data-analysis-and-hypothesis-testing-1" class="section level3">
 <h3>Exploratory Data Analysis and Hypothesis Testing</h3>
